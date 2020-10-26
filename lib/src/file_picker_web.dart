@@ -63,13 +63,8 @@ class FilePickerWeb extends FilePicker {
       final List<File> files = uploadInput.files;
       final List<PlatformFile> pickedFiles = [];
 
-      void addPickedFile(File file, Uint8List bytes, String path) {
-        pickedFiles.add(PlatformFile(
-          name: file.name,
-          path: path,
-          size: bytes != null ? bytes.length ~/ 1024 : -1,
-          bytes: bytes,
-        ));
+      void addPickedFile(File file, Uint8List bytes) {
+        pickedFiles.add(file.toPlatformFile(bytes));
 
         if (pickedFiles.length >= files.length) {
           filesCompleter.complete(pickedFiles);
@@ -80,7 +75,7 @@ class FilePickerWeb extends FilePicker {
         if (!withData) {
           final FileReader reader = FileReader();
           reader.onLoadEnd.listen((e) {
-            addPickedFile(file, null, reader.result);
+            addPickedFile(file, null);
           });
           reader.readAsDataUrl(file);
           return;
@@ -88,7 +83,7 @@ class FilePickerWeb extends FilePicker {
 
         final FileReader reader = FileReader();
         reader.onLoadEnd.listen((e) {
-          addPickedFile(file, reader.result, null);
+          addPickedFile(file, reader.result);
         });
         reader.readAsArrayBuffer(file);
       });
@@ -128,5 +123,16 @@ class FilePickerWeb extends FilePicker {
         break;
     }
     return '';
+  }
+}
+
+extension FileWebToPlatformFile on File {
+  PlatformFile toPlatformFile(Uint8List bytes) {
+    return PlatformFile(
+      name: this.name,
+      path: this.relativePath,
+      size: bytes != null ? bytes.length ~/ 1024 : -1,
+      bytes: bytes,
+    );
   }
 }
